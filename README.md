@@ -47,7 +47,8 @@ Una aplicació web moderna, lleugera i intuïtiva dissenyada com a **caixa d'ein
 ---
 
 ## 💻 Com utilitzar-ho
-
+Utilitza la app online a (https://bmarquil.github.io/Quadern-del-Mestre/)
+o bé en local seguint els següents passos:
 1. **Clona el repositori o descarrega el fitxer:**
    ```bash
    git clone https://github.com/el-teu-usuari/quadern-del-mestre.git
