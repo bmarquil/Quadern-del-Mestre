@@ -1,0 +1,1083 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadern del Mestre</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col font-sans antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Header / Navigation -->
+    <header class="bg-indigo-700 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-white text-indigo-700 p-2 rounded-lg shadow-md font-bold text-xl">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg leading-tight">Quadern del Mestre</h1>
+                        <p class="text-xs text-indigo-200">Caixa d'eines per a l'aula</p>
+                    </div>
+                </div>
+                
+                <!-- Main Navigation Tabs -->
+                <nav class="hidden md:flex space-x-1">
+                    <button onclick="switchTab('alumnes')" id="nav-alumnes" class="nav-btn px-3 py-2 rounded-md text-sm font-medium transition-colors bg-indigo-800 text-white">
+                        <i class="fa-solid fa-users mr-1.5"></i> Alumnes
+                    </button>
+                    <button onclick="switchTab('assignatures')" id="nav-assignatures" class="nav-btn px-3 py-2 rounded-md text-sm font-medium text-indigo-100 hover:bg-indigo-600 transition-colors">
+                        <i class="fa-solid fa-book mr-1.5"></i> Avaluar i Assignatures
+                    </button>
+                    <button onclick="switchTab('grups')" id="nav-grups" class="nav-btn px-3 py-2 rounded-md text-sm font-medium text-indigo-100 hover:bg-indigo-600 transition-colors">
+                        <i class="fa-solid fa-layer-group mr-1.5"></i> Generador Grups
+                    </button>
+                    <button onclick="switchTab('assistencia')" id="nav-assistencia" class="nav-btn px-3 py-2 rounded-md text-sm font-medium text-indigo-100 hover:bg-indigo-600 transition-colors">
+                        <i class="fa-solid fa-clipboard-user mr-1.5"></i> Assistència
+                    </button>
+                    <button onclick="switchTab('atzar')" id="nav-atzar" class="nav-btn px-3 py-2 rounded-md text-sm font-medium text-indigo-100 hover:bg-indigo-600 transition-colors">
+                        <i class="fa-solid fa-shuffle mr-1.5"></i> Alumne a l'Atzar
+                    </button>
+                </nav>
+
+                <!-- Action buttons -->
+                <div class="flex items-center space-x-2">
+                    <button onclick="exportData()" title="Exportar dades de seguretat" class="p-2 bg-indigo-800 hover:bg-indigo-600 text-indigo-100 rounded-lg text-xs font-semibold flex items-center transition">
+                        <i class="fa-solid fa-download sm:mr-1"></i> <span class="hidden sm:inline">Exportar</span>
+                    </button>
+                    <button onclick="document.getElementById('import-json-input').click()" title="Importar còpia de seguretat" class="p-2 bg-indigo-800 hover:bg-indigo-600 text-indigo-100 rounded-lg text-xs font-semibold flex items-center transition">
+                        <i class="fa-solid fa-upload sm:mr-1"></i> <span class="hidden sm:inline">Importar</span>
+                    </button>
+                    <input type="file" id="import-json-input" class="hidden" accept=".json" onchange="importData(event)">
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Navigation bar -->
+        <div class="md:hidden flex overflow-x-auto bg-indigo-800 px-2 py-1 space-x-1 text-xs custom-scrollbar">
+            <button onclick="switchTab('alumnes')" id="mob-nav-alumnes" class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-md font-medium text-white bg-indigo-900">Alumnes</button>
+            <button onclick="switchTab('assignatures')" id="mob-nav-assignatures" class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-md font-medium text-indigo-200">Assignatures</button>
+            <button onclick="switchTab('grups')" id="mob-nav-grups" class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-md font-medium text-indigo-200">Grups</button>
+            <button onclick="switchTab('assistencia')" id="mob-nav-assistencia" class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-md font-medium text-indigo-200">Assistència</button>
+            <button onclick="switchTab('atzar')" id="mob-nav-atzar" class="mob-nav-btn whitespace-nowrap px-3 py-1.5 rounded-md font-medium text-indigo-200">Atzar</button>
+        </div>
+    </header>
+
+    <!-- Notification Toast Container -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full">
+
+        <!-- TAB 1: GESTIÓ D'ALUMNES -->
+        <section id="tab-alumnes" class="tab-content space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Gestió d'Alumnat</h2>
+                    <p class="text-slate-500 text-sm">Afegeix manualment, importa mitjançant fitxer CSV o afegeix llistats ràpids.</p>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="openCsvModal()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center">
+                        <i class="fa-solid fa-file-csv mr-2"></i> Importar CSV
+                    </button>
+                    <button onclick="clearAllAlumnes()" class="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-sm font-medium border border-rose-200 transition">
+                        <i class="fa-solid fa-trash-can mr-1"></i> Buidar Llista
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Add Student Form -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-4">
+                    <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">Afegir Alumne/a</h3>
+                    
+                    <!-- Single student -->
+                    <form onsubmit="handleAddSingleStudent(event)" class="space-y-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nom complet</label>
+                            <input type="text" id="input-nom-alumne" placeholder="Ex: Marc Garcia Soler" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                        </div>
+                        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl text-sm shadow-sm transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus mr-2"></i> Afegir a la llista
+                        </button>
+                    </form>
+
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-200"></div>
+                        <span class="flex-shrink mx-4 text-slate-400 text-xs">O bé importació ràpida</span>
+                        <div class="flex-grow border-t border-slate-200"></div>
+                    </div>
+
+                    <!-- Bulk text input -->
+                    <div class="space-y-2">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase">Llista de noms (un per línia)</label>
+                        <textarea id="bulk-noms" rows="4" placeholder="Laura Pérez&#10;Jordi Vila&#10;Aina Mas" class="w-full px-3 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm"></textarea>
+                        <button onclick="handleBulkAdd()" class="w-full py-2 bg-slate-800 hover:bg-slate-900 text-white font-medium rounded-xl text-sm transition">
+                            Afegir bloc de noms
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Student List Display -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col min-h-[400px]">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Llistat d'Alumnat (<span id="total-alumnes-count">0</span>)</h3>
+                        <input type="text" id="search-student" oninput="renderAlumnes()" placeholder="Buscar alumne..." class="px-3 py-1.5 border border-slate-300 rounded-lg text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none w-48">
+                    </div>
+
+                    <div class="flex-grow overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase">
+                                    <th class="py-3 px-4">#</th>
+                                    <th class="py-3 px-4">Nom i Cognoms</th>
+                                    <th class="py-3 px-4 text-right">Accions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="alumnes-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                        <div id="alumnes-empty-state" class="hidden py-12 text-center text-slate-400">
+                            <i class="fa-solid fa-user-slash text-4xl mb-3 text-slate-300"></i>
+                            <p>Encara no hi ha cap alumne/a registrat.</p>
+                            <p class="text-xs">Afegeix-ne manualment o importa un fitxer CSV.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: ASSIGNATURES I AVALUACIÓ -->
+        <section id="tab-assignatures" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Avaluació i Qualificacions</h2>
+                    <p class="text-slate-500 text-sm">Gestiona assignatures, crea activitats/proves i avalua els teus alumnes.</p>
+                </div>
+                <button onclick="openSubjectModal()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold shadow-sm transition flex items-center self-start sm:self-auto">
+                    <i class="fa-solid fa-plus mr-2"></i> Nova Assignatura
+                </button>
+            </div>
+
+            <!-- Subject Selector Tabs -->
+            <div id="subjects-pills" class="flex items-center space-x-2 overflow-x-auto pb-2 custom-scrollbar">
+                <!-- Populated dynamically -->
+            </div>
+
+            <!-- Active Subject View -->
+            <div id="subject-detail-container" class="space-y-6">
+                <!-- Subject Header Info & Actions -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center space-x-3">
+                            <span id="current-subject-color" class="w-4 h-4 rounded-full bg-indigo-500 inline-block"></span>
+                            <h3 id="current-subject-title" class="text-xl font-bold text-slate-800">Assignatura</h3>
+                        </div>
+                        <p class="text-xs text-slate-500 mt-1">Crea proves o activitats per poder posar notes als alumnes.</p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="openActivityModal()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-xl shadow-sm transition flex items-center">
+                            <i class="fa-solid fa-file-pen mr-1.5"></i> Afegir Activitat / Prova
+                        </button>
+                        <button onclick="deleteCurrentSubject()" class="px-3 py-2 bg-slate-100 hover:bg-rose-100 hover:text-rose-600 text-slate-600 text-xs font-medium rounded-xl transition">
+                            <i class="fa-solid fa-trash mr-1"></i> Eliminar Assignatura
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Evaluation Grades Table -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                        <h4 class="font-bold text-slate-800 text-sm uppercase tracking-wider">Matriu de Notes</h4>
+                        <span class="text-xs bg-indigo-50 text-indigo-700 font-semibold px-2.5 py-1 rounded-full">Desat automàtic</span>
+                    </div>
+
+                    <div class="overflow-x-auto custom-scrollbar">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr id="grades-table-header" class="bg-slate-50 border-b border-slate-200 text-xs text-slate-600 uppercase font-semibold">
+                                    <!-- Populated dynamically -->
+                                </tr>
+                            </thead>
+                            <tbody id="grades-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                        <div id="grades-empty-state" class="hidden py-12 text-center text-slate-400">
+                            <i class="fa-solid fa-folder-open text-4xl mb-3 text-slate-300"></i>
+                            <p>No hi ha activitats creades per a aquesta assignatura.</p>
+                            <p class="text-xs">Fes clic a "Afegir Activitat / Prova" per començar a avaluar.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: GENERADOR DE GRUPS -->
+        <section id="tab-grups" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-2xl font-bold text-slate-800">Generador de Grups de Treball</h2>
+                <p class="text-slate-500 text-sm">Crea equips de treball aleatoris o equilibrats en pocs clics.</p>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Group Settings -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 space-y-5 h-fit">
+                    <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-3">Configuració</h3>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-2">Criteri de divisió</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button id="btn-mode-num-groups" onclick="setGroupMode('num_groups')" class="py-2 px-3 text-xs font-semibold rounded-xl border border-indigo-600 bg-indigo-50 text-indigo-700 transition">
+                                Nombre de Grups
+                            </button>
+                            <button id="btn-mode-size-groups" onclick="setGroupMode('size_groups')" class="py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 transition">
+                                Alumnes per Grup
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label id="lbl-group-target" class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nombre total de grups</label>
+                        <input type="number" id="input-group-target" min="1" max="50" value="4" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none font-semibold">
+                    </div>
+
+                    <button onclick="generateGroups()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm shadow-md transition flex items-center justify-center">
+                        <i class="fa-solid fa-dice mr-2"></i> Generar Equipaments
+                    </button>
+                </div>
+
+                <!-- Group Results -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 min-h-[400px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-bold text-slate-800">Grups Resultants</h3>
+                        <button id="btn-copy-groups" onclick="copyGroupsToClipboard()" class="hidden text-xs bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold px-3 py-1.5 rounded-lg transition flex items-center">
+                            <i class="fa-regular fa-copy mr-1.5"></i> Copiar Grups
+                        </button>
+                    </div>
+
+                    <div id="groups-result-container" class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-grow">
+                        <!-- Dynamic Groups -->
+                    </div>
+
+                    <div id="groups-empty-state" class="my-auto py-12 text-center text-slate-400">
+                        <i class="fa-solid fa-people-group text-5xl mb-3 text-slate-300"></i>
+                        <p class="font-medium">Cap grup generat encara.</p>
+                        <p class="text-xs">Ajusta els paràmetres i clica a "Generar Equipaments".</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: CONTROL D'ASSISTÈNCIA -->
+        <section id="tab-assistencia" class="tab-content hidden space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Control d'Assistència</h2>
+                    <p class="text-slate-500 text-sm">Passa llista de forma àgil i ràpida a la teva aula.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <input type="date" id="attendance-date" onchange="renderAttendance()" class="px-3.5 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button onclick="markAllPresent()" class="px-3 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-semibold transition">
+                        Tots Presents
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-xs text-slate-500 font-semibold uppercase">
+                                <th class="py-3 px-4">Alumne/a</th>
+                                <th class="py-3 px-4 text-center">Estat d'Assistència</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-table-body" class="divide-y divide-slate-100 text-sm">
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: ALUMNE A L'ATZAR (ROULETTE / PICKER) -->
+        <section id="tab-atzar" class="tab-content hidden space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center max-w-2xl mx-auto space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">Seleccionador d'Alumne a l'Atzar</h2>
+                    <p class="text-slate-500 text-sm">Qui respondrà la pregunta o farà la lectura avui?</p>
+                </div>
+
+                <!-- Display Box -->
+                <div class="relative py-12 px-6 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-3xl shadow-xl text-white overflow-hidden">
+                    <div class="absolute -top-10 -left-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                    <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
+                    
+                    <span class="text-xs uppercase tracking-widest font-semibold text-indigo-200 mb-2 block">L'alumne/a seleccionat/da és:</span>
+                    <h3 id="random-student-display" class="text-3xl sm:text-4xl font-extrabold tracking-tight min-h-[48px] flex items-center justify-center">
+                        ???
+                    </h3>
+                </div>
+
+                <div class="flex justify-center space-x-3">
+                    <button onclick="pickRandomStudent()" class="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-lg transition transform hover:-translate-y-0.5 active:translate-y-0 flex items-center">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2 text-lg"></i> Triar Alumne
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 font-medium">
+            Web app creada per <span class="font-bold text-indigo-600">Bernat Marquilles</span>
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+
+    <!-- Modal: Import CSV -->
+    <div id="modal-csv" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-lg">Importar Alumnes via CSV</h3>
+                <button onclick="closeModal('modal-csv')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <p class="text-xs text-slate-500">Selecciona un fitxer CSV que contingui la llista d'alumnes. S'intentarà extreure la columna de noms automàticament.</p>
+            <input type="file" id="csv-file-input" accept=".csv, .txt" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+            <div class="flex justify-end space-x-2 pt-2">
+                <button onclick="closeModal('modal-csv')" class="px-4 py-2 bg-slate-100 text-slate-600 font-medium rounded-xl text-xs">Cancelar</button>
+                <button onclick="processCsvFile()" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl text-xs hover:bg-indigo-700">Importar Dades</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Nova Assignatura -->
+    <div id="modal-subject" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-lg">Nova Assignatura</h3>
+                <button onclick="closeModal('modal-subject')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleCreateSubject(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nom de l'Assignatura</label>
+                    <input type="text" id="input-subject-name" required placeholder="Ex: Matemàtiques, Història..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Color d'Identificació</label>
+                    <div class="flex space-x-3 items-center">
+                        <input type="color" id="input-subject-color" value="#4f46e5" class="h-9 w-14 rounded cursor-pointer border border-slate-300">
+                        <span class="text-xs text-slate-500">Tria un color distintiu</span>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-subject')" class="px-4 py-2 bg-slate-100 text-slate-600 font-medium rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl text-xs hover:bg-indigo-700">Crear Assignatura</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Nova Activitat -->
+    <div id="modal-activity" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-lg">Afegir Activitat o Prova</h3>
+                <button onclick="closeModal('modal-activity')" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="handleCreateActivity(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Títol de la prova/activitat</label>
+                    <input type="text" id="input-activity-title" required placeholder="Ex: Examen Tema 1, Treball de grup..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pes en la nota (%)</label>
+                    <input type="number" id="input-activity-weight" min="1" max="100" value="10" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:outline-none text-sm font-semibold">
+                </div>
+                <div class="flex justify-end space-x-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-activity')" class="px-4 py-2 bg-slate-100 text-slate-600 font-medium rounded-xl text-xs">Cancelar</button>
+                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white font-semibold rounded-xl text-xs hover:bg-indigo-700">Afegir Activitat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APP LOGIC -->
+    <script>
+        // --- DATA STATE ---
+        let appData = {
+            alumnes: [],       // Array of { id, name }
+            assignatures: [],  // Array of { id, name, color, activitats: [{ id, name, weight }] }
+            grades: {},        // Object { subjectId_activityId_studentId: gradeValue }
+            attendance: {},    // Object { YYYY-MM-DD: { studentId: 'present'|'absent'|'late' } }
+            activeSubjectId: null
+        };
+
+        let groupMode = 'num_groups'; // 'num_groups' or 'size_groups'
+        let currentGeneratedGroups = [];
+
+        // --- INIT & LOCAL STORAGE ---
+        window.onload = function() {
+            loadData();
+            // Set current date in attendance picker
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('attendance-date').value = today;
+
+            if (appData.alumnes.length === 0) {
+                // Initial demo data if empty
+                appData.alumnes = [
+                    { id: '1', name: 'Alba Soler Mas' },
+                    { id: '2', name: 'Biel Font Serra' },
+                    { id: '3', name: 'Carla Martí Pou' },
+                    { id: '4', name: 'David Roca Gil' }
+                ];
+                appData.assignatures = [
+                    {
+                        id: 's1',
+                        name: 'Matemàtiques',
+                        color: '#4f46e5',
+                        activitats: [
+                            { id: 'a1', name: 'Examen T1', weight: 50 },
+                            { id: 'a2', name: 'Treball Geometria', weight: 50 }
+                        ]
+                    }
+                ];
+                appData.grades = {
+                    's1_a1_1': 8.5, 's1_a2_1': 9.0,
+                    's1_a1_2': 6.0, 's1_a2_2': 7.5,
+                    's1_a1_3': 9.5, 's1_a2_3': 10.0,
+                    's1_a1_4': 5.0, 's1_a2_4': 6.0
+                };
+                saveData();
+            }
+
+            if (appData.assignatures.length > 0) {
+                appData.activeSubjectId = appData.assignatures[0].id;
+            }
+
+            renderAlumnes();
+            renderSubjects();
+            renderAttendance();
+        };
+
+        function saveData() {
+            try {
+                localStorage.setItem('quadern_mestre_data', JSON.stringify(appData));
+            } catch (e) {
+                console.error("Error salvant a localStorage:", e);
+            }
+        }
+
+        function loadData() {
+            const saved = localStorage.getItem('quadern_mestre_data');
+            if (saved) {
+                try {
+                    appData = JSON.parse(saved);
+                    // Ensure keys exist
+                    if (!appData.alumnes) appData.alumnes = [];
+                    if (!appData.assignatures) appData.assignatures = [];
+                    if (!appData.grades) appData.grades = {};
+                    if (!appData.attendance) appData.attendance = {};
+                } catch (e) {
+                    console.error("Error carregant dades de localStorage", e);
+                }
+            }
+        }
+
+        // --- NAVIGATION TABS ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            // Header tabs active state
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-800', 'text-white');
+                btn.classList.add('text-indigo-100');
+            });
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('bg-indigo-800', 'text-white');
+                activeNav.classList.remove('text-indigo-100');
+            }
+
+            // Mobile nav active state
+            document.querySelectorAll('.mob-nav-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-900', 'text-white');
+                btn.classList.add('text-indigo-200');
+            });
+            const activeMobNav = document.getElementById(`mob-nav-${tabId}`);
+            if (activeMobNav) {
+                activeMobNav.classList.add('bg-indigo-900', 'text-white');
+                activeMobNav.classList.remove('text-indigo-200');
+            }
+
+            if (tabId === 'assignatures') renderSubjects();
+            if (tabId === 'assistencia') renderAttendance();
+        }
+
+        // --- TOAST NOTIFICATIONS ---
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'success' ? 'bg-slate-800 text-white' : 'bg-rose-600 text-white';
+            const icon = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-triangle-exclamation';
+
+            toast.className = `${bgClass} px-4 py-3 rounded-xl shadow-lg text-xs font-semibold flex items-center space-x-2 pointer-events-auto transition-all duration-300 transform translate-y-2 opacity-0`;
+            toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            }, 10);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- MODAL UTILS ---
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        // --- TAB 1: ALUMNES LOGIC ---
+        function renderAlumnes() {
+            const tbody = document.getElementById('alumnes-table-body');
+            const emptyState = document.getElementById('alumnes-empty-state');
+            const searchVal = (document.getElementById('search-student')?.value || '').toLowerCase();
+            
+            tbody.innerHTML = '';
+            const filtered = appData.alumnes.filter(a => a.name.toLowerCase().includes(searchVal));
+            
+            document.getElementById('total-alumnes-count').textContent = appData.alumnes.length;
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            filtered.forEach((alumne, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+                tr.innerHTML = `
+                    <td class="py-3 px-4 text-xs font-semibold text-slate-400">${index + 1}</td>
+                    <td class="py-3 px-4 font-medium text-slate-700">${escapeHtml(alumne.name)}</td>
+                    <td class="py-3 px-4 text-right">
+                        <button onclick="deleteAlumne('${alumne.id}')" class="text-slate-400 hover:text-rose-600 transition p-1" title="Eliminar">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function handleAddSingleStudent(e) {
+            e.preventDefault();
+            const input = document.getElementById('input-nom-alumne');
+            const name = input.value.trim();
+            if (!name) return;
+
+            appData.alumnes.push({ id: Date.now().toString(), name: name });
+            input.value = '';
+            saveData();
+            renderAlumnes();
+            showToast('Alumne afegit correctament');
+        }
+
+        function handleBulkAdd() {
+            const textarea = document.getElementById('bulk-noms');
+            const text = textarea.value.trim();
+            if (!text) return;
+
+            const lines = text.split('\n');
+            let addedCount = 0;
+            lines.forEach(line => {
+                const trimmed = line.trim();
+                if (trimmed) {
+                    appData.alumnes.push({ id: (Date.now() + Math.random()).toString(), name: trimmed });
+                    addedCount++;
+                }
+            });
+
+            textarea.value = '';
+            saveData();
+            renderAlumnes();
+            showToast(`S'han afegit ${addedCount} alumnes en bloc`);
+        }
+
+        function deleteAlumne(id) {
+            appData.alumnes = appData.alumnes.filter(a => a.id !== id);
+            saveData();
+            renderAlumnes();
+            showToast('Alumne eliminat', 'error');
+        }
+
+        function clearAllAlumnes() {
+            if (confirm("Estàs segur que vols esborrar TOTS els alumnes? Aquesta acció no es pot desfer.")) {
+                appData.alumnes = [];
+                saveData();
+                renderAlumnes();
+                showToast('Llista d\'alumnes buidada', 'error');
+            }
+        }
+
+        // CSV Import
+        function openCsvModal() { openModal('modal-csv'); }
+        function processCsvFile() {
+            const fileInput = document.getElementById('csv-file-input');
+            const file = fileInput.files[0];
+            if (!file) {
+                alert("Si us plau, selecciona un fitxer CSV.");
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                const lines = content.split(/\r\n|\n/);
+                let count = 0;
+                lines.forEach(line => {
+                    const cleanLine = line.replace(/[";]/g, ',').trim();
+                    if (cleanLine) {
+                        const parts = cleanLine.split(',');
+                        const candidate = parts[0].trim();
+                        if (candidate && candidate.toLowerCase() !== 'nom' && candidate.toLowerCase() !== 'name') {
+                            appData.alumnes.push({ id: (Date.now() + Math.random()).toString(), name: candidate });
+                            count++;
+                        }
+                    }
+                });
+                saveData();
+                renderAlumnes();
+                closeModal('modal-csv');
+                fileInput.value = '';
+                showToast(`S'han importat ${count} alumnes des del CSV`);
+            };
+            reader.readAsText(file);
+        }
+
+        // --- TAB 2: ASSIGNATURES I QUALIFICACIONS ---
+        function renderSubjects() {
+            const pillsContainer = document.getElementById('subjects-pills');
+            pillsContainer.innerHTML = '';
+
+            if (appData.assignatures.length === 0) {
+                document.getElementById('subject-detail-container').classList.add('hidden');
+                return;
+            }
+
+            document.getElementById('subject-detail-container').classList.remove('hidden');
+
+            if (!appData.activeSubjectId && appData.assignatures.length > 0) {
+                appData.activeSubjectId = appData.assignatures[0].id;
+            }
+
+            appData.assignatures.forEach(sub => {
+                const isActive = sub.id === appData.activeSubjectId;
+                const btn = document.createElement('button');
+                btn.onclick = () => { appData.activeSubjectId = sub.id; renderSubjects(); };
+                btn.className = `px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 whitespace-nowrap ${
+                    isActive ? 'bg-indigo-600 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
+                }`;
+                btn.innerHTML = `<span class="w-2.5 h-2.5 rounded-full" style="background-color: ${sub.color}"></span><span>${escapeHtml(sub.name)}</span>`;
+                pillsContainer.appendChild(btn);
+            });
+
+            const activeSub = appData.assignatures.find(s => s.id === appData.activeSubjectId);
+            if (activeSub) {
+                document.getElementById('current-subject-title').textContent = activeSub.name;
+                document.getElementById('current-subject-color').style.backgroundColor = activeSub.color;
+                renderGradesTable(activeSub);
+            }
+        }
+
+        function openSubjectModal() { openModal('modal-subject'); }
+        function handleCreateSubject(e) {
+            e.preventDefault();
+            const nameInput = document.getElementById('input-subject-name');
+            const colorInput = document.getElementById('input-subject-color');
+
+            const newSub = {
+                id: 'sub_' + Date.now(),
+                name: nameInput.value.trim(),
+                color: colorInput.value,
+                activitats: []
+            };
+
+            appData.assignatures.push(newSub);
+            appData.activeSubjectId = newSub.id;
+            saveData();
+            renderSubjects();
+            closeModal('modal-subject');
+            nameInput.value = '';
+            showToast('Nova assignatura creada');
+        }
+
+        function deleteCurrentSubject() {
+            if (!appData.activeSubjectId) return;
+            if (confirm("Segur que vols eliminar aquesta assignatura i totes les seves notes?")) {
+                appData.assignatures = appData.assignatures.filter(s => s.id !== appData.activeSubjectId);
+                appData.activeSubjectId = appData.assignatures.length > 0 ? appData.assignatures[0].id : null;
+                saveData();
+                renderSubjects();
+                showToast('Assignatura eliminada', 'error');
+            }
+        }
+
+        function openActivityModal() {
+            if (!appData.activeSubjectId) {
+                alert("Primer crea una assignatura.");
+                return;
+            }
+            openModal('modal-activity');
+        }
+
+        function handleCreateActivity(e) {
+            e.preventDefault();
+            const titleInput = document.getElementById('input-activity-title');
+            const weightInput = document.getElementById('input-activity-weight');
+
+            const activeSub = appData.assignatures.find(s => s.id === appData.activeSubjectId);
+            if (!activeSub) return;
+
+            const newAct = {
+                id: 'act_' + Date.now(),
+                name: titleInput.value.trim(),
+                weight: parseFloat(weightInput.value) || 10
+            };
+
+            activeSub.activitats.push(newAct);
+            saveData();
+            renderSubjects();
+            closeModal('modal-activity');
+            titleInput.value = '';
+            showToast('Activitat afegida');
+        }
+
+        function deleteActivity(actId) {
+            const activeSub = appData.assignatures.find(s => s.id === appData.activeSubjectId);
+            if (!activeSub) return;
+
+            activeSub.activitats = activeSub.activitats.filter(a => a.id !== actId);
+            saveData();
+            renderSubjects();
+            showToast('Activitat eliminada', 'error');
+        }
+
+        function renderGradesTable(subject) {
+            const headerRow = document.getElementById('grades-table-header');
+            const tbody = document.getElementById('grades-table-body');
+            const emptyState = document.getElementById('grades-empty-state');
+
+            headerRow.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (!subject.activitats || subject.activitats.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            // Header columns
+            let headerHtml = `<th class="py-3 px-4 font-semibold">Alumne/a</th>`;
+            subject.activitats.forEach(act => {
+                headerHtml += `
+                    <th class="py-3 px-4 font-semibold text-center min-w-[120px]">
+                        <div class="flex items-center justify-center space-x-1">
+                            <span>${escapeHtml(act.name)}</span>
+                            <button onclick="deleteActivity('${act.id}')" class="text-slate-300 hover:text-rose-500 text-xs ml-1" title="Eliminar activitat">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </th>`;
+            });
+            headerHtml += `<th class="py-3 px-4 font-bold text-center text-indigo-700 bg-indigo-50/50">Mitjana</th>`;
+            headerRow.innerHTML = headerHtml;
+
+            // Body rows per student
+            appData.alumnes.forEach(alumne => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50/80 transition';
+
+                let rowHtml = `<td class="py-3 px-4 font-medium text-slate-700">${escapeHtml(alumne.name)}</td>`;
+                
+                let totalWeightedScore = 0;
+                let totalWeight = 0;
+
+                subject.activitats.forEach(act => {
+                    const gradeKey = `${subject.id}_${act.id}_${alumne.id}`;
+                    const currentGrade = appData.grades[gradeKey] !== undefined ? appData.grades[gradeKey] : '';
+                    
+                    if (currentGrade !== '' && !isNaN(currentGrade)) {
+                        totalWeightedScore += parseFloat(currentGrade) * act.weight;
+                        totalWeight += act.weight;
+                    }
+
+                    rowHtml += `
+                        <td class="py-2 px-3 text-center">
+                            <input type="number" min="0" max="10" step="0.1" value="${currentGrade}"
+                                onchange="updateGrade('${gradeKey}', this.value)"
+                                placeholder="-" 
+                                class="w-16 text-center py-1 border border-slate-200 rounded-lg text-sm font-semibold focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </td>
+                    `;
+                });
+
+                const average = totalWeight > 0 ? (totalWeightedScore / totalWeight).toFixed(1) : '-';
+                const avgColorClass = average !== '-' ? (parseFloat(average) >= 5 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold') : 'text-slate-400';
+
+                rowHtml += `<td class="py-3 px-4 text-center font-bold bg-indigo-50/30 ${avgColorClass}">${average}</td>`;
+                tr.innerHTML = rowHtml;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function updateGrade(key, value) {
+            if (value === '') {
+                delete appData.grades[key];
+            } else {
+                appData.grades[key] = parseFloat(value);
+            }
+            saveData();
+            const activeSub = appData.assignatures.find(s => s.id === appData.activeSubjectId);
+            if (activeSub) renderGradesTable(activeSub);
+        }
+
+        // --- TAB 3: GENERADOR DE GRUPS ---
+        function setGroupMode(mode) {
+            groupMode = mode;
+            const btnNum = document.getElementById('btn-mode-num-groups');
+            const btnSize = document.getElementById('btn-mode-size-groups');
+            const lbl = document.getElementById('lbl-group-target');
+
+            if (mode === 'num_groups') {
+                btnNum.className = 'py-2 px-3 text-xs font-semibold rounded-xl border border-indigo-600 bg-indigo-50 text-indigo-700 transition';
+                btnSize.className = 'py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 transition';
+                lbl.textContent = 'Nombre total de grups';
+            } else {
+                btnSize.className = 'py-2 px-3 text-xs font-semibold rounded-xl border border-indigo-600 bg-indigo-50 text-indigo-700 transition';
+                btnNum.className = 'py-2 px-3 text-xs font-semibold rounded-xl border border-slate-200 bg-white text-slate-600 transition';
+                lbl.textContent = 'Alumnes per cada grup';
+            }
+        }
+
+        function generateGroups() {
+            if (appData.alumnes.length === 0) {
+                alert("Necessites tenir alumnes registrats per generar grups.");
+                return;
+            }
+
+            const targetVal = parseInt(document.getElementById('input-group-target').value) || 1;
+            const shuffled = [...appData.alumnes].sort(() => 0.5 - Math.random());
+            
+            let numGroups = 1;
+            if (groupMode === 'num_groups') {
+                numGroups = Math.max(1, Math.min(targetVal, shuffled.length));
+            } else {
+                numGroups = Math.max(1, Math.ceil(shuffled.length / Math.max(1, targetVal)));
+            }
+
+            const groups = Array.from({ length: numGroups }, () => []);
+            shuffled.forEach((student, idx) => {
+                groups[idx % numGroups].push(student);
+            });
+
+            currentGeneratedGroups = groups;
+            renderGroupsResult(groups);
+        }
+
+        function renderGroupsResult(groups) {
+            const container = document.getElementById('groups-result-container');
+            const emptyState = document.getElementById('groups-empty-state');
+            const copyBtn = document.getElementById('btn-copy-groups');
+
+            container.innerHTML = '';
+            if (groups.length === 0) {
+                emptyState.classList.remove('hidden');
+                copyBtn.classList.add('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            copyBtn.classList.remove('hidden');
+
+            groups.forEach((grp, idx) => {
+                const card = document.createElement('div');
+                card.className = 'bg-slate-50 border border-slate-200 p-4 rounded-xl space-y-2';
+                
+                let listHtml = grp.map(s => `<li class="text-sm font-medium text-slate-700 flex items-center"><i class="fa-solid fa-user-tag text-xs text-indigo-400 mr-2"></i>${escapeHtml(s.name)}</li>`).join('');
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-slate-200 pb-2">
+                        <h4 class="font-bold text-indigo-700 text-sm">Grup ${idx + 1}</h4>
+                        <span class="text-xs bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full font-semibold">${grp.length} alumnes</span>
+                    </div>
+                    <ul class="space-y-1.5 pt-1">${listHtml}</ul>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function copyGroupsToClipboard() {
+            if (currentGeneratedGroups.length === 0) return;
+            let text = "GRUPS DE TREBALL:\n\n";
+            currentGeneratedGroups.forEach((grp, i) => {
+                text += `GRUP ${i + 1}:\n` + grp.map(s => `- ${s.name}`).join('\n') + '\n\n';
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                showToast('Grups copiats al portapapers!');
+            }).catch(() => {
+                showToast('No s\'ha pogut copiar', 'error');
+            });
+        }
+
+        // --- TAB 4: CONTROL D'ASSISTÈNCIA ---
+        function renderAttendance() {
+            const dateStr = document.getElementById('attendance-date').value;
+            const tbody = document.getElementById('attendance-table-body');
+            tbody.innerHTML = '';
+
+            if (!appData.attendance[dateStr]) {
+                appData.attendance[dateStr] = {};
+            }
+
+            appData.alumnes.forEach(alumne => {
+                const status = appData.attendance[dateStr][alumne.id] || 'present';
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-4 font-medium text-slate-700">${escapeHtml(alumne.name)}</td>
+                    <td class="py-3 px-4 text-center">
+                        <div class="inline-flex rounded-xl bg-slate-100 p-1 border border-slate-200 space-x-1">
+                            <button onclick="setAttendance('${dateStr}', '${alumne.id}', 'present')" class="px-3 py-1 rounded-lg text-xs font-bold transition ${status === 'present' ? 'bg-emerald-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}">
+                                Present
+                            </button>
+                            <button onclick="setAttendance('${dateStr}', '${alumne.id}', 'late')" class="px-3 py-1 rounded-lg text-xs font-bold transition ${status === 'late' ? 'bg-amber-500 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}">
+                                Retard
+                            </button>
+                            <button onclick="setAttendance('${dateStr}', '${alumne.id}', 'absent')" class="px-3 py-1 rounded-lg text-xs font-bold transition ${status === 'absent' ? 'bg-rose-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'}">
+                                Absent
+                            </button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function setAttendance(dateStr, studentId, status) {
+            if (!appData.attendance[dateStr]) appData.attendance[dateStr] = {};
+            appData.attendance[dateStr][studentId] = status;
+            saveData();
+            renderAttendance();
+        }
+
+        function markAllPresent() {
+            const dateStr = document.getElementById('attendance-date').value;
+            if (!appData.attendance[dateStr]) appData.attendance[dateStr] = {};
+            appData.alumnes.forEach(a => {
+                appData.attendance[dateStr][a.id] = 'present';
+            });
+            saveData();
+            renderAttendance();
+            showToast('Tots marcats com a presents');
+        }
+
+        // --- TAB 5: ALUMNE A L'ATZAR ---
+        function pickRandomStudent() {
+            if (appData.alumnes.length === 0) {
+                alert("No hi ha alumnes a la llista!");
+                return;
+            }
+
+            const display = document.getElementById('random-student-display');
+            let counter = 0;
+            const duration = 20; // total cycles
+            
+            const interval = setInterval(() => {
+                const randomName = appData.alumnes[Math.floor(Math.random() * appData.alumnes.length)].name;
+                display.textContent = randomName;
+                counter++;
+
+                if (counter >= duration) {
+                    clearInterval(interval);
+                    // Launch confetti
+                    if (typeof confetti === 'function') {
+                        confetti({
+                            particleCount: 80,
+                            spread: 60,
+                            origin: { y: 0.6 }
+                        });
+                    }
+                }
+            }, 80);
+        }
+
+        // --- IMPORT / EXPORT DATA ---
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(appData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `quadern_mestre_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast('Còpia de seguretat descarregada');
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.alumnes && imported.assignatures) {
+                        appData = imported;
+                        saveData();
+                        renderAlumnes();
+                        renderSubjects();
+                        renderAttendance();
+                        showToast('Dades importades amb èxit!');
+                    } else {
+                        alert("El fitxer JSON no té el format correcte.");
+                    }
+                } catch (err) {
+                    alert("Error en llegir el fitxer de dades JSON.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- HELPER UTILS ---
+        function escapeHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+    </script>
+</body>
+</html>
